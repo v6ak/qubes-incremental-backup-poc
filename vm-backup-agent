@@ -1,6 +1,61 @@
 #!/bin/bash
+# safety settings
+set -u
+set -e
+set -o pipefail
+
 # This script runs in a DVM, not in dom0
-echo "Hello from backup agent"
-echo "Path: $1"
-vbk64=$(cat | base64)
-echo "vbk64=$vbk64"
+
+function add_paths {
+	sed 's#^/#/mnt/clone/#'
+}
+
+mkdir /tmp/backup-wapor/
+
+PASSPHRASE="$(cat | base64)" # We'll use the key as password, because it seems to be the easiest way in Duplicity.
+[ "$(wc -c <<< $PASSPHRASE)" -ge 45 ] # Check the password/key has not been truncated. Key should be 32B, when base64'd and appended \n, it should be 45B.
+BUP_LOCATION="file:///tmp/backup-wapor/$1" # TODO: select proper backup location
+BUP_SOURCE="/mnt/clone"
+
+# Inspired by https://gist.github.com/bdsatish/5650178
+MY_GPG="--compress-algo=bzip2 --bzip2-compress-level=9 --cipher-algo=aes256 --digest-algo=sha512"
+
+timestamp="$(date +%Y-%m-%d)"
+exclude_filelist=/tmp/exclude-filelist-"$timestamp"
+exclude_globbing_filelist=/tmp/exclude-globbing-filelist-"$timestamp"
+homedir=/home/user
+
+
+# TODO: Move some (all?) of those to default ignore lists
+(
+	echo "$homedir/.cache"
+	echo "$homedir"/.Xauthority
+	echo "$homedir"/.xsession-errors
+	if [ -e /mnt/clone/backup-exclude-filelist ]; then
+		cat /mnt/clone/backup-exclude-filelist
+	fi
+) | add_paths > "$exclude_filelist"
+
+(
+	echo "$homedir/.mozilla/firefox/*/saved/telemetry-pings"
+	echo "$homedir/.mozilla/firefox/*/healthreport.sqlite"
+	if [ -e /mnt/clone/backup-exclude-globbing-filelist ]; then
+		cat /mnt/clone/backup-exclude-globbing-filelist
+	fi
+) | add_paths > "$exclude_globbing_filelist"
+
+echo "Skipped filelist (also in $exclude_filelist):"
+cat "$exclude_filelist"
+(
+	export PASSPHRASE
+	time sudo --preserve-env duplicity incremental \
+		--full-if-older-than 3M \
+		--volsize 128 \
+		--gpg-options "$MY_GPG" \
+		--exclude-filelist "$exclude_filelist" \
+		--exclude-globbing-filelist "$exclude_globbing_filelist" \
+		--exclude-other-filesystems \
+		"$BUP_SOURCE" \
+		"$BUP_LOCATION"
+	unset PASSPHRASE
+) | (! sed '/^Errors 0$/ q 1') # sed: Ugly hack to fail when some error has occured. I know, it truncates the rest of the stream, but there is nothing interesting.
