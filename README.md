@@ -46,7 +46,7 @@ I've tried few backup tools. I have decided to use Duplicity. This one was someh
 
 * Opensource (=> publicly auditable)
 * Performs file-based incremental backups (full backup is performed once per a defined interval)
-* Backup is encrypted and authenticated using GPG. When one tampers the backup, it should be caught by GPG and the restore procedure should not continue.
+* Backup is encrypted and authenticated using GPG. When one tampers the backup, it should be caught by GPG and the restore procedure should not continue. (I haven't checked if/how they defend against renaming the files or against copying the files under another name. However, such vulnerability would be probably hard to abuse, especially when you cannot cross VMs.)
 * Supports various storage backends.
 * Writing a custom storage backend seems to be a realistic amount of work: https://github.com/Rudd-O/duplicity-qubes
 * GPG can be configured. It can use either symmetric (preferred) or asymmetric cryptography.
