@@ -1,0 +1,6 @@
+#!/bin/bash
+# This script runs in a DVM, not in dom0
+echo "Hello from backup agent"
+echo "Path: $1"
+vbk64=$(cat | base64)
+echo "vbk64=$vbk64"
