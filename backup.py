@@ -178,12 +178,13 @@ class DvmInstance: # We could extract VmInstance superclass, but we don't need i
 		subprocess.check_output(["qvm-block", "--attach-file", self.name, volume.xen_path(), "-f", name])
 	def detach_all(self):
 		subprocess.check_output(["qvm-block", "--detach", self.name])
+	def create_command(self, command):
+		return ["qvm-run", "-p", self.name, command]
 	def check_output(self, command, stdin = None, input = None):
-		command = ["qvm-run", "-p", self.name, command]
 		if stdin == None:
-			return subprocess.check_output(command, input = input)
+			return subprocess.check_output(self.create_command(command), input = input)
 		elif input == None:
-			return subprocess.check_output(command, stdin = stdin)
+			return subprocess.check_output(self.create_command(command), stdin = stdin)
 		else:
 			raise Exception("cannot handle both stdin and input")
 
@@ -332,7 +333,10 @@ def main():
 					with open(os.path.dirname(os.path.realpath(__file__))+"/vm-backup-agent", "rb") as inp:
 						dvm.check_output("cat > /tmp/backup-agent", stdin = inp)
 					dvm.check_output("chmod +x /tmp/backup-agent")
-					print(dvm.check_output("/tmp/backup-agent "+vm_keys.encrypted_name, input = vm_keys.key))
+					with subprocess.Popen(dvm.create_command("/tmp/backup-agent "+vm_keys.encrypted_name), stdin = subprocess.PIPE) as proc:
+						proc.stdin.write(vm_keys.key)
+						proc.stdin.close()
+						assert(proc.wait() == 0) # uarrgh, implemented by busy loop
 					# TODO: also copy ~/.v6-qubes-backup-poc/master to the backup in order to make it recoverable without additional data (except password). See issue #12.
 				finally: dvm.check_output("sudo umount /mnt/clone")
 			finally: dvm.detach_all()
