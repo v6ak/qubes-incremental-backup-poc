@@ -61,8 +61,8 @@ If you want to use something else, I hope it will not be hard to replace it with
 
 I believe it is clear that we need different keys for different VMs, unless we move the encryption and decryption to dom0. All keys are derived from one passphrase:
 
-master_key = stretch_key(passphrase)
-subkey_$vm = derive_subkey(master_key, "vm-"+vm)
+    master_key = stretch_key(passphrase)
+    subkey_$vm = derive_subkey(master_key, "vm-"+vm)
 
 We also need few other subkeys, but they aren't so important.
 
@@ -78,11 +78,11 @@ I have picked scrypt, because it is tunable and fairly reviewed. Other functions
 
 Parameters for scrypt are inspired from [https://stackoverflow.com/questions/11126315/what-are-optimal-scrypt-work-factors] . I have considered increasing parallelization parameter, but the implementation of scrypt I have used does not look like being able to use multiple cores. But we still might want to increate p and decrease N in order to lower memory requirements. The link suggests as a more paranoid version something like this:
 
-stretch_key(passphrase) = scrypt(passphrase, salt, 1<<20, 8, 1, 32)
+    stretch_key(passphrase) = scrypt(passphrase, salt, 1<<20, 8, 1, 32)
 
 This requires 1GiB of RAM for scrypt, which is much memory in some cases. Since dom0 can have about 1GiB–4GiB of RAM, depending on requirements of other VMs, it can be a significant portion of total RAM available. I propose decresaing amount of needed memory with similar CPU requirements (similar time without parallelisation, lower memory requirements):
 
-stretch_key(passphrase) = scrypt(passphrase, salt, 1<<17, 8, 8, 32)
+    stretch_key(passphrase) = scrypt(passphrase, salt, 1<<17, 8, 8, 32)
 
 Note that all the parameters are more strict than the soft variant recommended in the post mentioned above. While the recommendation is from 2009, the parameters are increased more than the Moore's inflation as of 2017. (In 8 years, computers are expected to be 2^4 times faster, while this is 2^6 times more hard. Moreover, the Moore's inflation does not hold for some parameters like RAM latency, which can slow the progress down, especially with Scrypt design.)
 
@@ -94,11 +94,11 @@ The size 32 \[bytes\] was chosen because we can hardly go (or need to go) beyond
 
 The subkey generation was designed to be fast. Key is already stretched:
 
-derive_subkey(master_key, subkey_identifier) = hmac(sha256, master_key, subkey_identifier)
+    derive_subkey(master_key, subkey_identifier) = hmac(sha256, master_key, subkey_identifier)
 
-I know HMAC was designed for a different purpose. We need a keyed-PRF rather than MAC. But according to [https://cseweb.ucsd.edu/~mihir/papers/hmac-new.html], “HMAC is a PRF under the sole assumption that the compression function is a PRF”.
+I know HMAC was designed for a different purpose. We need a keyed-PRF rather than MAC. But according to https://cseweb.ucsd.edu/~mihir/papers/hmac-new.html, “HMAC is a PRF under the sole assumption that the compression function is a PRF”.
 
-TODO: Is SHA256 really a PRF? I hope so. And it also seems that it is used in such way in TLS: [https://crypto.stackexchange.com/questions/26410/whats-the-gcm-sha-256-of-a-tls-protocol]
+TODO: Is SHA256 really a PRF? I hope so. And it also seems that it is used in such way in TLS: https://crypto.stackexchange.com/questions/26410/whats-the-gcm-sha-256-of-a-tls-protocol
 
 Probably even some punk solution like sha256(master_key || vm_name) would work well (length-extension attack is not practically applicable there), but I would preffer a more standard way.
 
