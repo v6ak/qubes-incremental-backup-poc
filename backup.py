@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # Preconditions: sudo qubes-dom0-update zenity perl-Crypt-ScryptKDF
 
 # The code is a PoC quality. It should generally work, but:
