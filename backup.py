@@ -304,13 +304,15 @@ class BackupConfig:
 def main():
 	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
 	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
+	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
+	parser.add_argument('--config-dir', dest='config_dir', action='store', default=Path(os.path.expanduser("~/.v6-qubes-backup-poc")), type=Path, help='path to config directory (Intended for testing.)')
 	args = parser.parse_args()
 	vm = args.vms[0]
 
-	config = BackupConfig.read_or_create(Path(os.path.expanduser("~/.v6-qubes-backup-poc")))
+	config = BackupConfig.read_or_create(args.config_dir)
 	# TODO: refactor password handling (repeated prompt when creating, repeated prompt when entering bad password, …)
 	kdf = config.get_password_kdf()
-	password = ask_for_password("Backup passphrase" if config.passphrase_exists() else "Create a new backup passphrase")
+	password = args.passphrase if args.passphrase is not None else ask_for_password("Backup passphrase" if config.passphrase_exists() else "Create a new backup passphrase")
 	session = MasterBackupSession(kdf(password), 32)
 	password = None # just hygiene
 	if config.passphrase_exists():
