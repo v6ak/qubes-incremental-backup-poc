@@ -17,6 +17,7 @@ import os
 import sys
 import shutil
 import collections
+import argparse
 from pathlib import Path
 
 def scrypt(password, salt, log2_N, r, p, length):
@@ -301,11 +302,10 @@ class BackupConfig:
 		with open(str(self._passphrase_test_file()), "wb+") as f: return f.write(new_data)
 
 def main():
-	if len(sys.argv) == 2:
-		vm = sys.argv[1]
-	else:
-		print("Usage: "+sys.argv[0]+" vm-name")
-		exit(1)
+	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
+	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
+	args = parser.parse_args()
+	vm = args.vms[0]
 
 	config = BackupConfig.read_or_create(Path(os.path.expanduser("~/.v6-qubes-backup-poc")))
 	# TODO: refactor password handling (repeated prompt when creating, repeated prompt when entering bad password, …)
