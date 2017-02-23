@@ -82,6 +82,45 @@ class MasterBackupSession:
 			key = self.subkey_vm(vm_name)
 		)
 
+def create_session_gui(config, passphrase):
+	def create_session(passphrase):
+		kdf = config.get_password_kdf()
+		return MasterBackupSession(kdf(passphrase), 32)
+
+	if passphrase is not None:
+		session = create_session(passphrase)
+		if session.test_master_key(config.get_passphrase_test()):
+			return session
+		else:
+			print("Bad passphrase")
+			return None
+
+	if config.passphrase_exists():
+		first = True
+		while True:
+			p = ask_for_password("Your backup passphrase" if first else "Bad backup passphrase, try again")
+			if p is None:
+				return None
+			session = create_session(p)
+			if session.test_master_key(config.get_passphrase_test()):
+				return session
+			first = False
+	else:
+		# Creating a new passphrase
+		while True:
+			p1 = ask_for_password("Create a new backup passphrase")
+			if p1 is None:
+				return None
+			p2 = ask_for_password("Retype your backup passphrase")
+			if p2 is None:
+				return None
+			if hmac.compare_digest(p1.encode("utf-8"), p2.encode("utf-8")):
+				session = create_session(p1)
+				config.save_passphrase_test(session.gen_test_content())
+				return session
+			subprocess.check_call(["zenity", "--error", "--text=Passphrases do not match"])
+
+
 def main():
 	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
 	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
@@ -91,17 +130,8 @@ def main():
 	vm = args.vms[0]
 
 	config = BackupConfig.read_or_create(args.config_dir)
-	# TODO: refactor password handling (repeated prompt when creating, repeated prompt when entering bad password, …)
-	kdf = config.get_password_kdf()
-	password = args.passphrase if args.passphrase is not None else ask_for_password("Backup passphrase" if config.passphrase_exists() else "Create a new backup passphrase")
-	session = MasterBackupSession(kdf(password), 32)
-	password = None # just hygiene
-	if config.passphrase_exists():
-		if not session.test_master_key(config.get_passphrase_test()):
-			print("Bad password")
-			exit(66)
-	else:
-		config.save_passphrase_test(session.gen_test_content())
+	session = create_session_gui(config, args.passphrase)
+	if session is None: return 1 # aborted
 	vm_keys = session.vm_keys(vm)
 
 	volume_clone = Vm(vm).private_volume().clone("v6-qubes-backup-poc-cloned")
