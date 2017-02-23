@@ -86,7 +86,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
 	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
 	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
-	parser.add_argument('--config-dir', dest='config_dir', action='store', default=Path(os.path.expanduser("~/.v6-qubes-backup-poc")), type=Path, help='path to config directory (Intended for testing.)')
+	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
 	args = parser.parse_args()
 	vm = args.vms[0]
 

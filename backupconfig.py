@@ -2,6 +2,7 @@
 import collections
 import os
 from cryptopunk import scrypt
+from pathlib import Path
 
 class ConfigItem(collections.namedtuple('ConfigItem', 'default_generator')):
 	def default(self):
@@ -27,6 +28,8 @@ class BackupConfig:
 	def __init__(self, path, master_pass_config):
 		self.master_pass_config = master_pass_config
 		self.path = path
+	@staticmethod
+	def get_default_path(): return Path(os.path.expanduser("~/.v6-qubes-backup-poc"))
 	@staticmethod
 	def read_or_create(path):
 		# Maybe one could find an existing library that does this better. The problem is that the library would have to be reasonably reviewed, which is not an easy task.
