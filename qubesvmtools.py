@@ -37,20 +37,17 @@ class Vm:
 		else:
 			raise Exception("unexpected file type")
 
-class DvmInstance: # We could extract VmInstance superclass, but we don't need it
+class VmInstance:
 	def __init__(self, name):
 		self.name = name
-	@staticmethod
-	def create(color = "red"):
-		return DvmInstance(subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "LAUNCH", "dom0", "", color]).decode("ascii").rstrip("\n"))
-	def close(self):
-		subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "FINISH", self.name])
+	def get_name(self):
+		return self.name
 	def attach(self, name, volume):
 		subprocess.check_output(["qvm-block", "--attach-file", self.name, volume.xen_path(), "-f", name])
 	def detach_all(self):
 		subprocess.check_output(["qvm-block", "--detach", self.name])
 	def create_command(self, command):
-		return ["qvm-run", "-p", self.name, command]
+		return ["qvm-run", "-a", "-p", self.name, command]
 	def check_output(self, command, stdin = None, input = None):
 		if stdin == None:
 			return subprocess.check_output(self.create_command(command), input = input)
@@ -58,6 +55,14 @@ class DvmInstance: # We could extract VmInstance superclass, but we don't need i
 			return subprocess.check_output(self.create_command(command), stdin = stdin)
 		else:
 			raise Exception("cannot handle both stdin and input")
+class DvmInstance(VmInstance):
+	def __init__(self, name):
+		super().__init__(name)
+	@staticmethod
+	def create(color = "red"):
+		return DvmInstance(subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "LAUNCH", "dom0", "", color]).decode("ascii").rstrip("\n"))
+	def close(self):
+		subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "FINISH", self.name])
 
 class Volume:
 	def __init__(self, vm):
