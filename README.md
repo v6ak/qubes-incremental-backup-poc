@@ -12,6 +12,8 @@
 * Backup will be transfered over network to some untrusted place.
 * Attacker can obtain some reasonably limited metadata about the backup.
 * If attacker has modified the backup, it can be detected. Replay attacks (i.e., replacing by some older backup) are not currently intended to be mitigated, though. Attacker that controls the storage can also mix age of backups, remove some VM or add a removed VM.
+    * IDEA: Add timestamps to detect replay attacks.
+    * IDEA: Use Merkle-tree-based commit mechanism to authenticate whole backups, not just their parts. This would also prevent some other atomicity-related bugs in backup backend.
 * bonus: Ability to backup a running VM (if easily achievable)
 
 ## How to achieve it
