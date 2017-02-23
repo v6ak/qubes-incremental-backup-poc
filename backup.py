@@ -104,7 +104,7 @@ def main():
 		config.save_passphrase_test(session.gen_test_content())
 	vm_keys = session.vm_keys(vm)
 
-	volume_clone = Vm(vm).private_volume().clone()
+	volume_clone = Vm(vm).private_volume().clone("v6-qubes-backup-poc-cloned")
 	try:
 		dvm = DvmInstance.create()
 		try:

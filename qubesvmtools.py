@@ -67,7 +67,7 @@ class DvmInstance(VmInstance):
 class Volume:
 	def __init__(self, vm):
 		self.vm = vm
-	def clone(self):
+	def clone(self, mark):
 		raise Exception("not implemented")
 	def remove(self):
 		raise Exception("not implemented")
@@ -81,8 +81,8 @@ class LvmVolume(Volume):
 		self.vg = vg
 	def __str__(self):
 		return "LvmVolume("+str(self.vm)+", "+str(self.lv)+", "+str(self.vg)+")"
-	def clone(self):
-		clone_lv = "clone-"+self.lv
+	def clone(self, mark):
+		clone_lv = mark+"-"+self.lv
 		clone_volume = LvmVolume(self.vm, self.vg, clone_lv)
 		if clone_volume.exists():
 			clone_volume.remove()
@@ -105,10 +105,10 @@ class FileVolume(Volume):
 		self.path = path
 	def __str__(self):
 		return "FileVolume("+str(self.vm)+", "+str(self.path)+")"
-	def clone(self):
+	def clone(self, mark):
 		if self.vm.is_running():
 			raise Exception("VM is running, backup is not supported for this type of VM when running")
-		clone_path = Path(str(self.path)+".clone")
+		clone_path = Path(str(self.path)+"."+mark)
 		#shutil.copyfile(str(self.path), str(clone_path)) <— does not seem to support sparse files, so it is slooooooow
 		subprocess.check_output(["cp", "--sparse=always", "--", str(self.path), str(clone_path)])
 		return FileVolume(self.vm, clone_path)
