@@ -13,6 +13,7 @@ PACK=(
 	backupconfig.py
 	cryptopunk.py
 	vm-backup-agent
+	backupsession.py
 )
 IGNORE=(
 	repo_vm
