@@ -3,6 +3,7 @@ import collections
 import os
 from cryptopunk import scrypt
 from pathlib import Path
+import backupbackends.duplicity
 
 class ConfigItem(collections.namedtuple('ConfigItem', 'default_generator')):
 	def default(self):
@@ -58,9 +59,13 @@ class BackupConfig:
 		return lambda password: scrypt(password, self.master_pass_config['salt'], self.master_pass_config['log2_N'], self.master_pass_config['r'], self.master_pass_config['p'], 32)
 	def _passphrase_test_file(self):
 		return self.path / "passphrase_test"
+	def get_backup_storage_vm_name(self):
+		with open(str(self.path/"backup-storage-vm-name"), "r") as f:
+			return f.read().rstrip("\n")
 	def passphrase_exists(self):
 		return os.path.exists(str(self._passphrase_test_file()))
 	def get_passphrase_test(self):
 		with open(str(self._passphrase_test_file()), "rb") as f: return f.read(64)
 	def save_passphrase_test(self, new_data):
 		with open(str(self._passphrase_test_file()), "wb+") as f: return f.write(new_data)
+	def get_backup_backend(self): return backupbackends.duplicity.DuplicityBackupBackend() # The only currently supported backend

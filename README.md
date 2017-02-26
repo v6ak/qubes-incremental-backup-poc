@@ -1,6 +1,6 @@
 ## Status
 
-**Parts of implementation are missing. See the [“MVP” milestone](https://github.com/v6ak/qubes-incremental-backup-poc/issues?q=is%3Aopen+is%3Aissue+milestone%3AMVP) for details. Proof of concept. Backup format details will likely change.**
+**Proof of concept. Backup format details will likely change.**
 
 ## Goals
 
@@ -130,6 +130,7 @@ TODO
 ## Limitations
 
 * DVM template is somehow trusted.
+* Works with some (most?) Duplicity backends. It requires allowing directory-like URLs.
 * We assume that DVM template has drivers for all filesystems we need to backup
 * VM config backup is missing. User needs to backup `~/.v6-qubes-backup-poc/master` in order to be able to restore the backup.
 * The implementation assumes that attacker cannot read parameters of running applications (e.g., via /proc). This is justifiable in Qubes security model, especially in dom0, but it is not very nice.
@@ -137,6 +138,7 @@ TODO
 * We strongly assume that attacker does not have any access to dom0. More specificaly, attacker cannot obtain a RAM snapshot of dom0 and attacker cannot list running applications of dom0 (e.g., via /proc). While those assumptions are standard in Qubes security model, failing to satisfy them can cause the backup security to break hardly. No serious attempt has been made to reduce number of copies of sensitive cryptographic material in RAM.
 * It assumes that we use locale utf-8. When one switches locale, it can cause issues, mostly with password. If you use another encoding, you might get troubles, especially if your password contains some characters that are represented differently in your encoding than in utf-8.
 * It assumes that user does not run the script multiple times in parallel. Various race conditions (cloned images, config files) could happen there.
+* https://github.com/v6ak/qubes-incremental-backup-poc/labels/limitation
 * (Probably incomplete)
 
 ## Human aspects for password

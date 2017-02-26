@@ -16,6 +16,7 @@ import re
 import os
 import sys
 import shutil
+import shlex
 import collections
 import argparse
 from backupsession import MasterBackupSession
@@ -77,9 +78,10 @@ def main():
 	session = create_session_gui(config, args.passphrase)
 	if session is None: return 1 # aborted
 	vm_keys = session.vm_keys(vm)
-
+	backup_backend = config.get_backup_backend()
 	volume_clone = Vm(vm).private_volume().clone("v6-qubes-backup-poc-cloned")
 	try:
+		backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())
 		dvm = DvmInstance.create()
 		try:
 			dvm.attach("xvdz", volume_clone)  # --ro: 1. is not needed since it is a clone, 2. blocks repair procedures when mounting
@@ -87,13 +89,13 @@ def main():
 				dvm.check_output("sudo mkdir /mnt/clone")
 				dvm.check_output("sudo mount /dev/xvdz /mnt/clone") # TODO: consider -o nosuid,noexec – see issue #16
 				try:
-					with open(os.path.dirname(os.path.realpath(__file__))+"/vm-backup-agent", "rb") as inp:
-						dvm.check_output("cat > /tmp/backup-agent", stdin = inp)
-					dvm.check_output("chmod +x /tmp/backup-agent")
-					with subprocess.Popen(dvm.create_command("/tmp/backup-agent "+vm_keys.encrypted_name), stdin = subprocess.PIPE) as proc:
-						proc.stdin.write(vm_keys.key)
-						proc.stdin.close()
-						assert(proc.wait() == 0) # uarrgh, implemented by busy loop
+					backup_backend.upload_agent(dvm)
+					with backup_backend.add_permissions(backup_storage_vm, dvm, vm_keys.encrypted_name):
+						# run the agent
+						with subprocess.Popen(dvm.create_command("/tmp/backup-agent "+shlex.quote(backup_storage_vm.get_name())+" "+shlex.quote(vm_keys.encrypted_name)), stdin = subprocess.PIPE) as proc:
+							proc.stdin.write(vm_keys.key)
+							proc.stdin.close()
+							assert(proc.wait() == 0) # uarrgh, implemented by busy loop
 					# TODO: also copy ~/.v6-qubes-backup-poc/master to the backup in order to make it recoverable without additional data (except password). See issue #12.
 				finally: dvm.check_output("sudo umount /mnt/clone")
 			finally: dvm.detach_all()
