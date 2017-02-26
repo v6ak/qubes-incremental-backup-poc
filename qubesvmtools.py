@@ -60,7 +60,10 @@ class DvmInstance(VmInstance):
 		super().__init__(name)
 	@staticmethod
 	def create(color = "red"):
-		return DvmInstance(subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "LAUNCH", "dom0", "", color]).decode("ascii").rstrip("\n"))
+		vm_name = subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "LAUNCH", "dom0", "", color]).decode("ascii").rstrip("\n")
+		if vm_name == '': # This theoretically should not happen, but I've seen this to happen when low on memory
+			raise Exception("Unable to start DVM")
+		return DvmInstance(vm_name)
 	def close(self):
 		subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "FINISH", self.name])
 
