@@ -22,7 +22,7 @@ def sanitize_filename(filename):
 		if (c >= 'a') and (c <= 'z'): continue
 		if (c >= 'A') and (c <= 'Z'): continue
 		if (c >= '0') and (c <= '9'): continue
-		if (c == '-') or (c == '_'): continue
+		if (c == '-') or (c == '_') or (c == '='): continue
 		raise Exception("Unexpected character: "+str(ord(c)))
 	return filename
 
@@ -48,7 +48,7 @@ def _read_until_zero_intgen(inp, maxlen = None):
 			assert(False)
 
 def read_safe_filename(inp):
-	return sanitize_filename(read_until_zero(inp, 255))
+	return sanitize_filename(read_until_zero(inp, 255).decode("ascii"))
 
 def write_zero_terminated_ascii(f, bs):
 	assert(bs.find(b'\0') == -1)

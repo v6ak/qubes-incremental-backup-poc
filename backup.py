@@ -66,7 +66,7 @@ def create_session_gui(config, passphrase):
 			subprocess.check_call(["zenity", "--error", "--text=Passphrases do not match"])
 
 
-def action_backup(vm_info, config):
+def action_backup(vm_info, config, session):
 	vm = vm_info.vm
 	vm_keys = vm_info.vm_keys
 	backup_backend = config.get_backup_backend()
@@ -93,18 +93,27 @@ def action_backup(vm_info, config):
 		finally: dvm.close()
 	finally: volume_clone.remove()
 
-def action_show_vm_keys(vm_info, config):
+def action_show_vm_keys(vm_info, config, session):
 	print(vm_info.vm_keys)
 
+def action_list_backups(config, session):
+	encrypted_names = config.get_backup_backend().list_backups(VmInstance(config.get_backup_storage_vm_name()))
+	names = list(map(session.file_name_crypter.decrypt, encrypted_names))
+	names.sort()
+	for i in names:
+		print(i)
+
 def multiple_vm_action(prefix, action):
-	def extended_action(vms, config):
+	def extended_action(vms, config, session):
+		if len(vms) == 0:
+			raise Exception("Expected at least one VM")
 		n = 0
 		succeeded_for = []
 		try:
 			for i in vms:
 				n += 1
 				print(prefix+" "+i.vm.get_name()+" ("+str(n)+"/"+str(len(vms))+"):")
-				action(i, config)
+				action(i, config, session)
 				succeeded_for.append(i)
 		except:
 			if len(succeeded_for) == 0:
@@ -114,16 +123,24 @@ def multiple_vm_action(prefix, action):
 			raise
 	return extended_action
 
+def no_vm_action(action):
+	def extended_action(vms, config, session):
+		if len(vms) != 0:
+			raise Exception("This action does not accept VM list!")
+		action(config, session)
+	return extended_action
+
 ACTIONS = {
 	"backup": multiple_vm_action('Backing up VM', action_backup),
-	"show_vm_keys": multiple_vm_action('VM keys for', action_show_vm_keys)
+	"show_vm_keys": multiple_vm_action('VM keys for', action_show_vm_keys),
+	"list_backups": no_vm_action(action_list_backups),
 }
 
 class VmInfo(namedtuple('VmInfo', 'vm vm_keys')): pass
 
 def main():
 	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
-	parser.add_argument('vms', metavar='VM name', type=str, nargs='+', help='Name of VM(s)')
+	parser.add_argument('vms', metavar='VM name', type=str, nargs='*', help='Name of VM(s)')
 	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
 	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
 	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: backup, show_vm_keys.')
@@ -137,7 +154,7 @@ def main():
 	if act is None:
 		print("Bad action")
 		exit(1)
-	act(vms, config)
+	act(vms, config, session)
 
 if __name__ == "__main__":
 	main()

@@ -1,8 +1,10 @@
 # python3
 import subprocess
+from subprocess import Popen
 import re
 from pathlib import Path
 import os
+
 
 class Vm:
 	def __init__(self, name):
@@ -50,6 +52,8 @@ class VmInstance:
 		subprocess.check_output(["qvm-block", "--detach", self.name])
 	def create_command(self, command):
 		return ["qvm-run", "-a", "-p", self.name, command]
+	def popen(self, command, stdin = None, stdout = None, stderr = None):
+		return Popen(self.create_command(command), stdin = stdin, stdout = stdout, stderr = stderr)
 	def check_output(self, command, stdin = None, input = None):
 		if stdin == None:
 			return subprocess.check_output(self.create_command(command), input = input)
