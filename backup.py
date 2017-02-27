@@ -143,7 +143,7 @@ def main():
 	parser.add_argument('vms', metavar='VM name', type=str, nargs='*', help='Name of VM(s)')
 	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
 	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
-	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: backup, show_vm_keys.')
+	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: '+str(', '.join(sorted(list(ACTIONS.keys()))))+'.')
 	args = parser.parse_args()
 
 	config = BackupConfig.read_or_create(args.config_dir)
