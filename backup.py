@@ -17,7 +17,7 @@ import os
 import sys
 import shutil
 import shlex
-import collections
+from collections import namedtuple
 import argparse
 from backupsession import MasterBackupSession
 from qubesvmtools import Vm, VmInstance, DvmInstance
@@ -66,7 +66,9 @@ def create_session_gui(config, passphrase):
 			subprocess.check_call(["zenity", "--error", "--text=Passphrases do not match"])
 
 
-def action_backup(vm, vm_keys, config):
+def action_backup(vm_info, config):
+	vm = vm_info.vm
+	vm_keys = vm_info.vm_keys
 	backup_backend = config.get_backup_backend()
 	volume_clone = vm.private_volume().clone("v6-qubes-backup-poc-cloned")
 	try:
@@ -91,32 +93,51 @@ def action_backup(vm, vm_keys, config):
 		finally: dvm.close()
 	finally: volume_clone.remove()
 
-def action_show_vm_keys(vm, vm_keys, config):
-	print(vm_keys)
+def action_show_vm_keys(vm_info, config):
+	print(vm_info.vm_keys)
+
+def multiple_vm_action(prefix, action):
+	def extended_action(vms, config):
+		n = 0
+		succeeded_for = []
+		try:
+			for i in vms:
+				n += 1
+				print(prefix+" "+i.vm.get_name()+" ("+str(n)+"/"+str(len(vms))+"):")
+				action(i, config)
+				succeeded_for.append(i)
+		except:
+			if len(succeeded_for) == 0:
+				print("Fail occured when trying the first VM")
+			else:
+				print("Action has been successfuly completed for those VMs: "+str(list(map(lambda vmi: vmi.vm.get_name(), succeeded_for))))
+			raise
+	return extended_action
 
 ACTIONS = {
-	"backup": action_backup,
-	"show_vm_keys": action_show_vm_keys
+	"backup": multiple_vm_action('Backing up VM', action_backup),
+	"show_vm_keys": multiple_vm_action('VM keys for', action_show_vm_keys)
 }
+
+class VmInfo(namedtuple('VmInfo', 'vm vm_keys')): pass
 
 def main():
 	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
-	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
+	parser.add_argument('vms', metavar='VM name', type=str, nargs='+', help='Name of VM(s)')
 	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
 	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
 	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: backup, show_vm_keys.')
 	args = parser.parse_args()
-	vm = Vm(args.vms[0])
 
 	config = BackupConfig.read_or_create(args.config_dir)
 	session = create_session_gui(config, args.passphrase)
 	if session is None: return 1 # aborted
-	vm_keys = session.vm_keys(vm.get_name())
+	vms = list(map(lambda name: VmInfo(Vm(name), session.vm_keys(name)), args.vms))
 	act = ACTIONS.get(args.action)
 	if act is None:
 		print("Bad action")
 		exit(1)
-	act(vm, vm_keys, config)
+	act(vms, config)
 
 if __name__ == "__main__":
 	main()
