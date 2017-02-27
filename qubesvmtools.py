@@ -20,6 +20,8 @@ class Vm:
 			raise Exception("unexpected return code: "+str(ret))
 	def private_volume_path(self):
 		return Path("/var/lib/qubes/appvms/"+self.name+"/private.img")
+	def get_name(self):
+		return self.name
 	def private_volume(self):
 		path = self.private_volume_path()
 		if path.is_symlink():

@@ -66,20 +66,9 @@ def create_session_gui(config, passphrase):
 			subprocess.check_call(["zenity", "--error", "--text=Passphrases do not match"])
 
 
-def main():
-	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
-	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
-	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
-	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
-	args = parser.parse_args()
-	vm = args.vms[0]
-
-	config = BackupConfig.read_or_create(args.config_dir)
-	session = create_session_gui(config, args.passphrase)
-	if session is None: return 1 # aborted
-	vm_keys = session.vm_keys(vm)
+def action_backup(vm, vm_keys, config):
 	backup_backend = config.get_backup_backend()
-	volume_clone = Vm(vm).private_volume().clone("v6-qubes-backup-poc-cloned")
+	volume_clone = vm.private_volume().clone("v6-qubes-backup-poc-cloned")
 	try:
 		backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())
 		dvm = DvmInstance.create()
@@ -101,6 +90,33 @@ def main():
 			finally: dvm.detach_all()
 		finally: dvm.close()
 	finally: volume_clone.remove()
+
+def action_show_vm_keys(vm, vm_keys, config):
+	print(vm_keys)
+
+ACTIONS = {
+	"backup": action_backup,
+	"show_vm_keys": action_show_vm_keys
+}
+
+def main():
+	parser = argparse.ArgumentParser(description='Backups your VMs. Performs incremental file-based backup.')
+	parser.add_argument('vms', metavar='VM name', type=str, nargs=1, help='Name of VM to backup')
+	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
+	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
+	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: backup, show_vm_keys.')
+	args = parser.parse_args()
+	vm = Vm(args.vms[0])
+
+	config = BackupConfig.read_or_create(args.config_dir)
+	session = create_session_gui(config, args.passphrase)
+	if session is None: return 1 # aborted
+	vm_keys = session.vm_keys(vm.get_name())
+	act = ACTIONS.get(args.action)
+	if act is None:
+		print("Bad action")
+		exit(1)
+	act(vm, vm_keys, config)
 
 if __name__ == "__main__":
 	main()
