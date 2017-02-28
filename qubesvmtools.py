@@ -73,6 +73,13 @@ class DvmInstance(VmInstance):
 	def close(self):
 		subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "FINISH", self.name])
 
+class Dvm: # Syntactic sugar for DvmInstance
+	def __enter__(self):
+		self.dvm = DvmInstance.create()
+		return self.dvm
+	def __exit__(self, type, value, traceback):
+		self.dvm.close()
+
 class Volume:
 	def __init__(self, vm):
 		self.vm = vm

@@ -1,0 +1,20 @@
+#!/bin/bash
+# safety settings
+set -u
+set -e
+set -o pipefail
+
+# This script runs in a DVM, not in dom0
+
+PASSPHRASE="$(cat | base64)" # We'll use the key as password, because it seems to be the easiest way in Duplicity.
+[ "$(wc -c <<< $PASSPHRASE)" -ge 45 ] # Check the password/key has not been truncated. Key should be 32B, when base64'd and appended \n, it should be 45B.
+BUP_LOCATION="qubesintervm://$1/$2"
+BUP_SOURCE="/mnt/clone"
+find "$BUP_SOURCE" -maxdepth 1 -mindepth 1 -not -name "lost+found" -print0 | sudo xargs -0 rm -r
+(
+	export PASSPHRASE
+	time sudo --preserve-env duplicity restore --force \
+		"$BUP_LOCATION" \
+		"$BUP_SOURCE"
+	unset PASSPHRASE
+)

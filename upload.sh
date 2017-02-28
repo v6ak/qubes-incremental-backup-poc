@@ -11,6 +11,7 @@ PACK=(
 	install-backup-storage-vm install-backup-storage-vm.py
 	backupbackends/duplicity.py
 	backupbackends/duplicity-vm-files/vm-backup-agent
+	backupbackends/duplicity-vm-files/vm-restore-agent
 	backupbackends/duplicity-vm-files/qubesintervmbackend.py
 	backupbackends/duplicity-vm-files/backup-storage-agent/v6-qubes-backup-poc.py
 	backupbackends/duplicity-vm-files/backup-storage-agent/list-backups.py

@@ -52,6 +52,9 @@ class DuplicityBackupBackend:
 		with open(self.base_path+"vm-backup-agent", "rb") as inp:
 			vm.check_output("cat > /tmp/backup-agent", stdin = inp)
 		vm.check_output("chmod +x /tmp/backup-agent")
+		with open(self.base_path+"vm-restore-agent", "rb") as inp:
+			vm.check_output("cat > /tmp/restore-agent", stdin = inp)
+		vm.check_output("chmod +x /tmp/restore-agent")
 		with open(self.base_path+"qubesintervmbackend.py", "rb") as inp:
 			vm.check_output("sudo tee /usr/lib/python2.7/dist-packages/duplicity/backends/qubesintervmbackend.py", stdin = inp)
 		with open(self.base_path+"common.py", "rb") as inp:
