@@ -165,7 +165,7 @@ def main():
 	parser.add_argument('vms', metavar='VM name', type=str, nargs='*', help='Name of VM(s)')
 	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
 	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
-	parser.add_argument('--vm-name-template', dest='vm_name_template', action='store', default='%', help='How should be the new VM named. Character % is replaced by the original name.')
+	parser.add_argument('--vm-name-template', dest='vm_name_template', action='store', default='%', help='How should be the new VM named. Character %% is replaced by the original name.')
 	parser.add_argument('--qvm-create-args', dest='qvm_create_args', action='store', default='', help='Args for qvm_create. (Used for restore)')
 	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: '+(', '.join(sorted(ACTIONS.keys())))+'.')
 	args = parser.parse_args()
