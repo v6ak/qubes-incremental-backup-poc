@@ -10,8 +10,6 @@ function add_paths {
 	sed 's#^/#/mnt/clone/#'
 }
 
-mkdir /tmp/backup-wapor/
-
 PASSPHRASE="$(cat | base64)" # We'll use the key as password, because it seems to be the easiest way in Duplicity.
 [ "$(wc -c <<< $PASSPHRASE)" -ge 45 ] # Check the password/key has not been truncated. Key should be 32B, when base64'd and appended \n, it should be 45B.
 BUP_LOCATION="qubesintervm://$1/$2"
