@@ -9,6 +9,7 @@ import subprocess
 import base64
 import time
 import duplicity.backend
+import duplicity.backends.rsyncbackend
 import duplicity.log
 import duplicity.path
 from common import Commands, StatusCodes, read_until_zero, read_safe_filename
@@ -16,6 +17,8 @@ from tempfile import NamedTemporaryFile
 from shutil import copyfileobj
 
 def action_list(backend, inp, out):
+	if isinstance(backend, duplicity.backends.rsyncbackend.RsyncBackend):
+		backend.run_command(" ".join([backend.cmd, "/dev/null", backend.url_string+"/"]))
 	result = backend.list()
 	out.write(StatusCodes.OK)
 	for i in result:
