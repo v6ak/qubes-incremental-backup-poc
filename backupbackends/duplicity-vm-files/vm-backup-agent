@@ -32,6 +32,9 @@ homedir=/home/user
 	if [ -e /mnt/clone/backup-exclude-filelist ]; then
 		cat /mnt/clone/backup-exclude-filelist
 	fi
+	if [ -e /rw-backup-exclude-filelist ]; then
+		cat /rw-backup-exclude-filelist
+	fi
 ) | add_paths > "$exclude_filelist"
 
 (
@@ -39,6 +42,9 @@ homedir=/home/user
 	echo "$homedir/.mozilla/firefox/*/healthreport.sqlite"
 	if [ -e /mnt/clone/backup-exclude-globbing-filelist ]; then
 		cat /mnt/clone/backup-exclude-globbing-filelist
+	fi
+	if [ -e /rw-backup-exclude-globbing-filelist ]; then
+		cat /rw-backup-exclude-globbing-filelist
 	fi
 ) | add_paths > "$exclude_globbing_filelist"
 
