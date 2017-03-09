@@ -5,7 +5,7 @@ import hmac
 import collections
 import base64
 
-# Plaintext filename: Any case-sensitive utf-8 string without binary zeros (i.e. '\0') of size (in bytes) at most filename_plain_size
+# Plaintext filename: Any case-sensitive ascii string without binary zeros (i.e. '\0') of size (in bytes) at most filename_plain_size
 # Ciphertext filename: A case-insensitive ascii base32 name of length base32_size_increase(filename_plain_size+mac_size)
 # Properties:
 # * Does not leak filename length
@@ -19,7 +19,7 @@ class FileNameCrypter:
 		self.mac_size = mac_size
 		self.filename_plain_size = filename_plain_size
 	def encrypt(self, filename):
-		encoded_filename_unpadded = filename.encode("utf-8")
+		encoded_filename_unpadded = filename.encode("ascii")
 		assert(encoded_filename_unpadded.find(b'\0') == -1)
 		encoded_filename_padded = encoded_filename_unpadded.ljust(self.filename_plain_size, b'\0')
 		assert(len(encoded_filename_unpadded) <= self.filename_plain_size)
@@ -31,7 +31,7 @@ class FileNameCrypter:
 		assert(len(plain_padded) == self.filename_plain_size )
 		plain = plain_padded.rstrip(b'\0')
 		assert(plain.find(b'\0') == -1)
-		return plain.decode("utf-8")
+		return plain.decode("ascii")
 
 class VmKeys(collections.namedtuple('VmKeys', 'encrypted_name key')):
 	def __str__(self):
@@ -50,7 +50,7 @@ class MasterBackupSession:
 		}
 		return hmac.new(self.master_key, subkey_id, HASHES[length]).digest()
 	def subkey_vm(self, vm_name):
-		return self.subkey(("vm-"+vm_name).encode("utf-8"))
+		return self.subkey(("vm-"+vm_name).encode("ascii"))
 	def test_master_key(self, test_content):
 		return hmac.compare_digest(test_content, self.gen_test_content())
 	def gen_test_content(self):
