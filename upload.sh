@@ -21,12 +21,15 @@ PACK=(
 	backupconfig.py
 	cryptopunk.py
 	backupsession.py
+	tests/backupsessiontest.py
+	Makefile
 )
 IGNORE=(
 	repo_vm
 	testconfig
 	__pycache__
 	backupbackends/__pycache__
+	tests/__pycache__
 )
 
 if ! diff <(find "${PACK[@]}" "${IGNORE[@]}" -type f -or -type l | sort) <(find -type f -or -type l | sed 's#^\./##' | sort); then

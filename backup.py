@@ -115,7 +115,7 @@ def action_restore(restored_vm_info, config, session, args):
 		finally: dvm.detach_all()
 
 def action_show_vm_keys(vm_info, config, session, args):
-	print(vm_info.vm_keys)
+	print(vm_info.vm_keys.encrypted_name+": "+base64.b64encode(vm_info.vm_keys.key).decode("ascii"))
 
 def action_list_backups(config, session, args):
 	encrypted_names = config.get_backup_backend().list_backups(VmInstance(config.get_backup_storage_vm_name()))

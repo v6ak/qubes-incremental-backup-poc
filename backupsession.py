@@ -33,7 +33,9 @@ class FileNameCrypter:
 		assert(plain.find(b'\0') == -1)
 		return plain.decode("utf-8")
 
-class VmKeys(collections.namedtuple('VmKeys', 'encrypted_name key')): pass
+class VmKeys(collections.namedtuple('VmKeys', 'encrypted_name key')):
+	def __str__(self):
+		return "VmKeys(…)"
 
 class MasterBackupSession:
 	def __init__(self, master_key, filename_mac_size = 16):
