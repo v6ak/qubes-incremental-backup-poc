@@ -25,7 +25,7 @@ class Vm:
 	def get_name(self):
 		return self.name
 	def instance_if_running(self):
-		if self.is_running:
+		if self.is_running():
 			return VmInstance(self.name)
 		else:
 			return None
@@ -75,11 +75,19 @@ class VmInstance:
 			raise Exception("cannot handle both stdin and input")
 	def check_call(self, command, stdin = None, input = None):
 		if stdin == None:
-			return subprocess.check_call(self.create_command(command), input = input)
+			stdin_type = subprocess.PIPE
 		elif input == None:
-			return subprocess.check_call(self.create_command(command), stdin = stdin)
+			stdin_type = stdin
 		else:
 			raise Exception("cannot handle both stdin and input")
+		command_native = self.create_command(command)
+		with Popen(command_native, stdin = stdin_type, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL) as proc:
+			if input is not None:
+				proc.stdin.write(input)
+			ret = proc.wait()
+			if ret != 0:
+				raise subprocess.CalledProcessError(ret, command_native)
+
 class DvmInstance(VmInstance):
 	def __init__(self, name):
 		super().__init__(name)
