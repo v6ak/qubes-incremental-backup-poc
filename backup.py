@@ -79,8 +79,8 @@ def action_backup(vm_info, config, session, args):
 		with Dvm() as dvm:
 			dvm.attach("xvdz", volume_clone)  # --ro: 1. is not needed since it is a clone, 2. blocks repair procedures when mounting
 			try:
-				dvm.check_output("sudo mkdir /mnt/clone")
-				dvm.check_output("sudo mount /dev/xvdz /mnt/clone") # TODO: consider -o nosuid,noexec – see issue #16
+				dvm.check_call("sudo mkdir /mnt/clone")
+				dvm.check_call("sudo mount /dev/xvdz /mnt/clone") # TODO: consider -o nosuid,noexec – see issue #16
 				try:
 					backup_backend.upload_agent(dvm)
 					with backup_backend.add_permissions(backup_storage_vm, dvm, vm_keys.encrypted_name):
@@ -90,7 +90,7 @@ def action_backup(vm_info, config, session, args):
 							proc.stdin.close()
 							assert(proc.wait() == 0) # uarrgh, implemented by busy loop
 					# TODO: also copy ~/.v6-qubes-backup-poc/master to the backup in order to make it recoverable without additional data (except password). See issue #12.
-				finally: dvm.check_output("sudo umount /mnt/clone")
+				finally: dvm.check_call("sudo umount /mnt/clone")
 			finally: dvm.detach_all()
 	finally: volume_clone.remove()
 
@@ -105,8 +105,8 @@ def action_restore(restored_vm_info, config, session, args):
 	with Dvm() as dvm:
 		dvm.attach("xvdz", new_vm.private_volume())
 		try:
-			dvm.check_output("sudo mkdir /mnt/clone")
-			dvm.check_output("sudo mount /dev/xvdz /mnt/clone")
+			dvm.check_call("sudo mkdir /mnt/clone")
+			dvm.check_call("sudo mount /dev/xvdz /mnt/clone")
 			try:
 				backup_backend.upload_agent(dvm)
 				with backup_backend.add_permissions(backup_storage_vm, dvm, restored_vm_info.vm_keys.encrypted_name):
@@ -114,7 +114,7 @@ def action_restore(restored_vm_info, config, session, args):
 						proc.stdin.write(restored_vm_info.vm_keys.key)
 						proc.stdin.close()
 						assert(proc.wait() == 0) # uarrgh, implemented by busy loop
-			finally: dvm.check_output("sudo umount /mnt/clone")
+			finally: dvm.check_call("sudo umount /mnt/clone")
 		finally: dvm.detach_all()
 
 def action_show_vm_keys(vm_info, config, session, args):

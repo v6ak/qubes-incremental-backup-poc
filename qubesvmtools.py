@@ -66,13 +66,6 @@ class VmInstance:
 			pass
 	def sync(self):
 		self.check_call("sync") # TODO: Sync in more universal way. See #46
-	def check_output(self, command, stdin = None, input = None):
-		if stdin == None:
-			return subprocess.check_output(self.create_command(command), input = input)
-		elif input == None:
-			return subprocess.check_output(self.create_command(command), stdin = stdin)
-		else:
-			raise Exception("cannot handle both stdin and input")
 	def check_call(self, command, stdin = None, input = None):
 		if stdin == None:
 			stdin_type = subprocess.PIPE
