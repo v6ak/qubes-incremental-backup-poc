@@ -70,6 +70,9 @@ def action_backup(vm_info, config, session, args):
 	vm = vm_info.vm
 	vm_keys = vm_info.vm_keys
 	backup_backend = config.get_backup_backend()
+	vm_instance = vm_info.vm.instance_if_running()
+	if vm_instance is not None:
+		vm_instance.try_sync()
 	volume_clone = vm.private_volume().clone("v6-qubes-backup-poc-cloned")
 	try:
 		backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())

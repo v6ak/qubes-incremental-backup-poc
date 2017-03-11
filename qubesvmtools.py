@@ -24,6 +24,11 @@ class Vm:
 		return Path("/var/lib/qubes/appvms/"+self.name+"/private.img")
 	def get_name(self):
 		return self.name
+	def instance_if_running(self):
+		if self.is_running:
+			return VmInstance(self.name)
+		else:
+			return None
 	def private_volume(self):
 		path = self.private_volume_path()
 		if path.is_symlink():
@@ -54,11 +59,25 @@ class VmInstance:
 		return ["qvm-run", "-a", "-p", self.name, command]
 	def popen(self, command, stdin = None, stdout = None, stderr = None):
 		return Popen(self.create_command(command), stdin = stdin, stdout = stdout, stderr = stderr)
+	def try_sync(self):
+		try:
+			self.sync()
+		except: # TODO: Be more specific on the exception caught
+			pass
+	def sync(self):
+		self.check_call("sync") # TODO: Sync in more universal way. See #46
 	def check_output(self, command, stdin = None, input = None):
 		if stdin == None:
 			return subprocess.check_output(self.create_command(command), input = input)
 		elif input == None:
 			return subprocess.check_output(self.create_command(command), stdin = stdin)
+		else:
+			raise Exception("cannot handle both stdin and input")
+	def check_call(self, command, stdin = None, input = None):
+		if stdin == None:
+			return subprocess.check_call(self.create_command(command), input = input)
+		elif input == None:
+			return subprocess.check_call(self.create_command(command), stdin = stdin)
 		else:
 			raise Exception("cannot handle both stdin and input")
 class DvmInstance(VmInstance):
