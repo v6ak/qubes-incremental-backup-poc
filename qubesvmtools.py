@@ -69,6 +69,8 @@ class DvmInstance(VmInstance):
 		vm_name = subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "LAUNCH", "dom0", "", color]).decode("ascii").rstrip("\n")
 		if vm_name == '': # This theoretically should not happen, but I've seen this to happen when low on memory
 			raise Exception("Unable to start DVM")
+		# Disable network connection. I know this is way not suitable for general-purpose library.
+		subprocess.check_call(["qvm-prefs", "-s", vm_name, "netvm", "none"])
 		return DvmInstance(vm_name)
 	def close(self):
 		subprocess.check_output(["/usr/lib/qubes/qfile-daemon-dvm", "FINISH", self.name])
