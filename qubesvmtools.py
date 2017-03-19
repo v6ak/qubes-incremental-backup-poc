@@ -81,6 +81,8 @@ class VmInstance:
 			ret = proc.wait()
 			if ret != 0:
 				raise subprocess.CalledProcessError(ret, command_native)
+	def shutdown(self):
+		subprocess.check_call(["qvm-shutdown", "--wait", self.name])
 
 class DvmInstance(VmInstance):
 	def __init__(self, name):

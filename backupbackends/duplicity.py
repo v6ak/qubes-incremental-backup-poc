@@ -67,7 +67,9 @@ class DuplicityBackupBackend(DvmBasedBackupBackend):
 		subprocess.check_call("echo "+shlex.quote("$anyvm  "+vm.get_name()+" allow")+" | sudo tee /etc/qubes-rpc/policy/v6ak.QubesInterVmBackupStorage", shell=True, stdout=subprocess.DEVNULL)
 
 	def install_backup_storage_vm(self, vm):
-		# TODO: make it persistent across reboots
+		vm.check_call("sudo mkdir -p /rw/config/qubes-bind-dirs.d")
+		vm.check_call("echo \"touch /etc/qubes-rpc/v6ak.QubesInterVmBackupStorage; binds+=( '/etc/qubes-rpc/v6ak.QubesInterVmBackupStorage' )\" | sudo tee /rw/config/qubes-bind-dirs.d/10_vm-qubes-backup-poc.conf")
+		vm.shutdown() # In order to apply binds
 		vm.check_call("sudo mkdir -p /usr/local/share/v6-qubes-backup-poc/")
 		vm.check_call("echo /usr/local/share/v6-qubes-backup-poc/v6-qubes-backup-poc.py | sudo tee /etc/qubes-rpc/v6ak.QubesInterVmBackupStorage")
 		with open(self.base_path+"backup-storage-agent/v6-qubes-backup-poc.py") as inp:

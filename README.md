@@ -4,7 +4,7 @@
 
 Currently, it is public preview. It contains scripts that can:
 
-* Install the backup storage VM (see install-backup-storage-vm). Currently, it is needed to install it after every reboot of the BackupStorageVM, because policy file in /etc/qubes-rpc/ does not survive reboot.
+* Install the backup storage VM (see install-backup-storage-vm).
 * Run the backup from dom0 (see backup).
 
 You might notice that DVM is also involved in the backup process, but no installation script is there. That's OK: All scripts needed in the DVM are uploaded automatically after DVM creation.
