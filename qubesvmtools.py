@@ -1,6 +1,6 @@
 # python3
 import subprocess
-from subprocess import Popen
+from subprocess import Popen, DEVNULL
 import re
 from pathlib import Path
 import os
@@ -10,7 +10,7 @@ class Vm:
 	def __init__(self, name):
 		pattern = re.compile("\\A[a-zA-Z0-9-]+\\Z")
 		if not pattern.match(name):
-			raise Exception("bad name")
+			raise Exception("bad name: "+name)
 		self.name = name
 	def is_running(self):
 		ret = subprocess.call(["qvm-check", "--running", self.name], stdout=subprocess.DEVNULL)
@@ -66,7 +66,7 @@ class VmInstance:
 			pass
 	def sync(self):
 		self.check_call("sync") # TODO: Sync in more universal way. See #46
-	def check_call(self, command, stdin = None, input = None):
+	def check_call(self, command, stdin = None, input = None, stdout = DEVNULL, stderr = DEVNULL):
 		if stdin == None:
 			stdin_type = subprocess.PIPE
 		elif input == None:
@@ -74,9 +74,10 @@ class VmInstance:
 		else:
 			raise Exception("cannot handle both stdin and input")
 		command_native = self.create_command(command)
-		with Popen(command_native, stdin = stdin_type, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL) as proc:
+		with Popen(command_native, stdin = stdin_type, stdout = stdout, stderr = stderr) as proc:
 			if input is not None:
 				proc.stdin.write(input)
+				proc.stdin.close()
 			ret = proc.wait()
 			if ret != 0:
 				raise subprocess.CalledProcessError(ret, command_native)

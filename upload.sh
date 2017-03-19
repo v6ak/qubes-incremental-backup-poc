@@ -9,6 +9,8 @@ set -o pipefail
 PACK=(
 	backup backup.py
 	install-backup-storage-vm install-backup-storage-vm.py
+	backupbackends/basic.py
+	backupbackends/dvmbased.py
 	backupbackends/duplicity.py
 	backupbackends/duplicity-vm-files/vm-backup-agent
 	backupbackends/duplicity-vm-files/vm-restore-agent
@@ -30,6 +32,7 @@ IGNORE=(
 	__pycache__
 	backupbackends/__pycache__
 	tests/__pycache__
+	backupbackends/qvmbackup.py.notdone
 )
 
 if ! diff <(find "${PACK[@]}" "${IGNORE[@]}" -type f -or -type l | sort) <(find -type f -or -type l | sed 's#^\./##' | sort); then

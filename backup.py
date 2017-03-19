@@ -73,49 +73,16 @@ def action_backup(vm_info, config, session, args):
 	vm_instance = vm_info.vm.instance_if_running()
 	if vm_instance is not None:
 		vm_instance.try_sync()
-	volume_clone = vm.private_volume().clone("v6-qubes-backup-poc-cloned")
-	try:
-		backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())
-		with Dvm() as dvm:
-			dvm.attach("xvdz", volume_clone)  # --ro: 1. is not needed since it is a clone, 2. blocks repair procedures when mounting
-			try:
-				dvm.check_call("sudo mkdir /mnt/clone")
-				dvm.check_call("sudo mount /dev/xvdz /mnt/clone") # TODO: consider -o nosuid,noexec – see issue #16
-				try:
-					backup_backend.upload_agent(dvm)
-					with backup_backend.add_permissions(backup_storage_vm, dvm, vm_keys.encrypted_name):
-						# run the agent
-						with subprocess.Popen(dvm.create_command("/tmp/backup-agent "+shlex.quote(backup_storage_vm.get_name())+" "+shlex.quote(vm_keys.encrypted_name)), stdin = subprocess.PIPE) as proc:
-							proc.stdin.write(vm_keys.key)
-							proc.stdin.close()
-							assert(proc.wait() == 0) # uarrgh, implemented by busy loop
-					# TODO: also copy ~/.v6-qubes-backup-poc/master to the backup in order to make it recoverable without additional data (except password). See issue #12.
-				finally: dvm.check_call("sudo umount /mnt/clone")
-			finally: dvm.detach_all()
-	finally: volume_clone.remove()
+	backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())
+	backup_backend.backup_vm(vm, vm_keys, backup_storage_vm)
 
 def action_restore(restored_vm_info, config, session, args):
 	# Maybe type vm_info is not what I need here…
 	new_name = args.vm_name_template.replace("%", restored_vm_info.vm.get_name())
-	subprocess.check_call("qvm-create "+shlex.quote(new_name)+" "+args.qvm_create_args, shell=True)
-	subprocess.check_call(["qvm-prefs", "-s", new_name, "netvm", "none"]) # Safe approach…
 	new_vm = Vm(new_name)
 	backup_backend = config.get_backup_backend()
 	backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())
-	with Dvm() as dvm:
-		dvm.attach("xvdz", new_vm.private_volume())
-		try:
-			dvm.check_call("sudo mkdir /mnt/clone")
-			dvm.check_call("sudo mount /dev/xvdz /mnt/clone")
-			try:
-				backup_backend.upload_agent(dvm)
-				with backup_backend.add_permissions(backup_storage_vm, dvm, restored_vm_info.vm_keys.encrypted_name):
-					with subprocess.Popen(dvm.create_command("/tmp/restore-agent "+shlex.quote(backup_storage_vm.get_name())+" "+shlex.quote(restored_vm_info.vm_keys.encrypted_name)), stdin = subprocess.PIPE) as proc:
-						proc.stdin.write(restored_vm_info.vm_keys.key)
-						proc.stdin.close()
-						assert(proc.wait() == 0) # uarrgh, implemented by busy loop
-			finally: dvm.check_call("sudo umount /mnt/clone")
-		finally: dvm.detach_all()
+	backup_backend.restore_vm(new_vm, new_name, args.qvm_create_args, restored_vm_info.vm_keys, backup_storage_vm)
 
 def action_show_vm_keys(vm_info, config, session, args):
 	print(vm_info.vm_keys.encrypted_name+": "+base64.b64encode(vm_info.vm_keys.key).decode("ascii"))
