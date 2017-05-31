@@ -133,7 +133,7 @@ Plain files are simply copied. A check that the VM is not running is performed b
 
 LVM block devices are handled by CoW snapshot. This is much faster and it works in some way even if the VM is running. Well… Actually, if you use a filesystem designed and configured for surviving sudden power outage, it should work well, because the snapshot of mounted filesystem will look like a filesystem where sudden power loss has happened. Practically speaking, if you are using ext4, you should have journal enabled and you shouldn't use flags like data=writeback.
 
-Note that Qubes 3.2 does not officially support LVM for private VM images. It is expected that private.img is a symlink to /dev/*&lt;vg>*/*&lt;lv>*. Other formats like /dev/mapper/*&lt;vg-with-doubled-minuses>*/*&lt;lv-with-doubled-minuses>* are not supported.
+Note that Qubes 3.2 does not officially support LVM for private VM images. It is expected that private.img is a symlink to /dev/*&lt;vg>*/*&lt;lv>*. Other formats like /dev/mapper/*&lt;vg-with-doubled-minuses>*-*&lt;lv-with-doubled-minuses>* are not supported.
 
 ## dom0 backup
 
