@@ -8,7 +8,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Installs backup storage to BackupStorageVM')
 	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
 	parser.add_argument('--without-dom0', dest='with_dom0', action='store_false', default=True, help='Skip the needed dom0 RPC permission file(s) – useful if you want to handle it yourself')
-	parser.add_argument('--vm', dest='vm', action='store', help='Overrides VM you want install the tools needed for backup storage. Useful when installing then to TemplateVM.')
+	parser.add_argument('--vm', dest='vm', action='store', help='Overrides VM you want install the tools needed for backup storage. Useful when installing them to TemplateVM.')
 	args = parser.parse_args()
 	config = BackupConfig.read_or_create(args.config_dir)
 	backup_backend = config.get_backup_backend()
