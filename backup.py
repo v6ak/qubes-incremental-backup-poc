@@ -82,7 +82,7 @@ def action_restore(restored_vm_info, config, session, args):
 	new_vm = Vm(new_name)
 	backup_backend = config.get_backup_backend()
 	backup_storage_vm = VmInstance(config.get_backup_storage_vm_name())
-	backup_backend.restore_vm(new_vm, new_name, args.qvm_create_args, restored_vm_info.vm_keys, backup_storage_vm)
+	backup_backend.restore_vm(new_vm, new_name, args.vm_size, args.qvm_create_args, restored_vm_info.vm_keys, backup_storage_vm)
 
 def action_show_vm_keys(vm_info, config, session, args):
 	print(vm_info.vm_keys.encrypted_name+": "+base64.b64encode(vm_info.vm_keys.key).decode("ascii"))
@@ -136,6 +136,7 @@ def main():
 	parser.add_argument('--passphrase', dest='passphrase', action='store', help='passphrase (Intended mostly for testing.)')
 	parser.add_argument('--config-dir', dest='config_dir', action='store', default=BackupConfig.get_default_path(), type=Path, help='path to config directory (Intended for testing.)')
 	parser.add_argument('--vm-name-template', dest='vm_name_template', action='store', default='%', help='How should be the new VM named. Character %% is replaced by the original name.')
+	parser.add_argument('--vm-size', dest='vm_size', action='store', default=None, help='VM size after restore')
 	parser.add_argument('--qvm-create-args', dest='qvm_create_args', action='store', default='', help='Args for qvm_create. (Used for restore)')
 	parser.add_argument('--action', dest='action', action='store', default='backup', help='What should be done with the VMs? Allowed values: '+(', '.join(sorted(ACTIONS.keys())))+'.')
 	args = parser.parse_args()

@@ -20,12 +20,17 @@ class DvmBasedBackupBackend(BackupBackend):
 				finally: dvm.detach_all()
 		finally: volume_clone.remove()
 
-	def restore_vm(self, new_vm, new_name, qvm_create_args, vm_keys, backup_storage_vm):
+	def restore_vm(self, new_vm, new_name, size, qvm_create_args, vm_keys, backup_storage_vm):
 		subprocess.check_call("qvm-create "+shlex.quote(new_name)+" "+qvm_create_args, shell=True)
 		subprocess.check_call(["qvm-prefs", "-s", new_name, "netvm", "none"]) # Safe approach…
+		if size is not None:
+			subprocess.check_call(["qvm-grow-private", new_name, size])
 		with Dvm() as dvm:
 			dvm.attach("xvdz", new_vm.private_volume())
 			try:
+				if size is not None:
+					dvm.check_call("sudo e2fsck -f -p /dev/xvdz")
+					dvm.check_call("sudo resize2fs /dev/xvdz")
 				dvm.check_call("sudo mkdir /mnt/clone")
 				dvm.check_call("sudo mount /dev/xvdz /mnt/clone")
 				try:
