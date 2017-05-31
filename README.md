@@ -125,9 +125,9 @@ It is tempting to use filenames simply derived from VM name. This would leak som
 We use some kind of deterministic encryption. I have used a scheme similar to AES-SIV (which I have found no suitable implementation for), but I use HMAC-SHA256 instead of S2V. HMAC is simpler, already implemented and should do the same job there. The scheme (I call it AES-HIV) does not support AAD, but this is not a requirement.
 
 
-## Snapshots
+## VM image cloning
 
-Snapshots are used for VM backup. The type of snapshot depends on the storage type of the VM. Two storage types are supported: plain file and LVM device.
+VM image is cloned before backup in order to see consistently a single state. The type of snapshot depends on the storage type of the VM. Two storage types are supported: plain file and LVM device.
 
 Plain files are simply copied. A check that the VM is not running is performed before the copy process is started. However, when the copy is in progress, the VM can be started, which can lead to some inconsistent copy. Yes, the situation is not nice, but I suppose that file-backed VMs aren't going to be there a long time, because Qubes 4 will reportedly use LVM.
 
@@ -142,7 +142,7 @@ TODO
 ## Limitations
 
 * DVM template is somehow trusted.
-* Works with some (most?) Duplicity backends. It requires allowing directory-like URLs.
+* Works with some (most?) Duplicity backends. It requires allowing directory-like URLs and ability to create a non-existent directory. Works at least with file backend (without any modification) and rsync backend (thanks to a hack).
 * We assume that DVM template has drivers for all filesystems we need to backup
 * VM config backup is missing. User needs to backup `~/.v6-qubes-backup-poc/master` in order to be able to restore the backup.
 * The implementation assumes that attacker cannot read parameters of running applications (e.g., via /proc). This is justifiable in Qubes security model, especially in dom0, but it is not very nice.
